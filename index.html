@@ -1,0 +1,3987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f8f5">
+  <title>比轻重 · 水果天平实验室</title>
+  <style>
+    :root {
+      --ink: #173042;
+      --ink-soft: #526878;
+      --paper: #ffffff;
+      --canvas: #f4f8f5;
+      --canvas-line: rgba(23, 48, 66, 0.055);
+      --teal: #0f766e;
+      --teal-dark: #095c56;
+      --teal-soft: #dcf5ef;
+      --orange: #e7671f;
+      --orange-soft: #fff0e3;
+      --yellow: #f6ca4d;
+      --yellow-soft: #fff7d8;
+      --red: #c93f52;
+      --red-soft: #ffe8eb;
+      --blue: #2b6cb0;
+      --blue-soft: #e7f1fc;
+      --line: #d8e2df;
+      --line-strong: #b5c9c3;
+      --shadow: 0 10px 28px rgba(21, 55, 65, 0.08);
+      --focus: 0 0 0 4px rgba(15, 118, 110, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      background: var(--canvas);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--canvas);
+      background-image:
+        linear-gradient(var(--canvas-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--canvas-line) 1px, transparent 1px);
+      background-size: 28px 28px;
+      font-family: ui-rounded, "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+      touch-action: manipulation;
+    }
+
+    button,
+    [draggable="true"] {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--teal);
+      outline-offset: 3px;
+      box-shadow: var(--focus);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .svg-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 20px 22px 28px;
+    }
+
+    .hero {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 10px 6px 18px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 0;
+      height: 3px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--teal) 0 34%, var(--yellow) 34% 51%, var(--orange) 51% 70%, transparent 70%);
+    }
+
+    .hero-main {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      color: var(--teal-dark);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .eyebrow svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .hero-copy {
+      margin: 8px 0 0;
+      color: var(--ink-soft);
+      font-size: 16px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+
+    .progress-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 54px;
+      padding: 8px 12px 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .progress-label {
+      display: grid;
+      gap: 1px;
+      line-height: 1.15;
+    }
+
+    .progress-label span {
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .progress-label strong {
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stars {
+      display: flex;
+      gap: 3px;
+    }
+
+    .star {
+      width: 22px;
+      height: 22px;
+      color: #c9d4d1;
+      transition: color 180ms ease, transform 180ms ease;
+    }
+
+    .star.is-filled {
+      color: var(--yellow);
+      transform: translateY(-1px) scale(1.05);
+    }
+
+    .star path {
+      fill: currentColor;
+      stroke: var(--ink);
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+    }
+
+    .reset-button,
+    .action-button,
+    .check-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: var(--paper);
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .reset-button:hover,
+    .action-button:hover {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .reset-button:active,
+    .action-button:active,
+    .check-button:active,
+    .fruit-card:active,
+    .side-button:active,
+    .step-button:active,
+    .rank-fruit:active,
+    .rank-slot:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    .reset-button svg,
+    .action-button svg,
+    .check-button svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 16px 0 18px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 4px 16px rgba(21, 55, 65, 0.05);
+    }
+
+    .mode-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink-soft);
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .mode-tab svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .mode-tab:hover {
+      color: var(--ink);
+      background: #eef4f1;
+    }
+
+    .mode-tab[aria-selected="true"] {
+      color: #ffffff;
+      background: var(--teal);
+      box-shadow: 0 5px 12px rgba(15, 118, 110, 0.2);
+    }
+
+    .mode-intro {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 0 2px 14px;
+    }
+
+    .mode-intro h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    .mode-intro p {
+      margin: 4px 0 0;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+
+    .mode-kicker {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid #b7d8d0;
+      border-radius: 999px;
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tool-panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .tool-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 15px 16px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tool-heading h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .tool-heading p {
+      margin: 3px 0 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+
+    .side-target {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .lab-layout {
+      display: grid;
+      grid-template-columns: minmax(230px, 0.7fr) minmax(0, 2.3fr);
+      align-items: start;
+      gap: 14px;
+    }
+
+    .picker-body,
+    .weights-body {
+      padding: 12px;
+    }
+
+    .side-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding: 4px;
+      border-radius: 8px;
+      background: #eef4f1;
+    }
+
+    .side-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .side-button span {
+      width: 9px;
+      height: 9px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+    }
+
+    .side-button[aria-pressed="true"] {
+      color: var(--teal-dark);
+      border-color: #b4d9d1;
+      background: #ffffff;
+      box-shadow: 0 3px 8px rgba(21, 55, 65, 0.08);
+    }
+
+    .fruit-picker {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .fruit-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      align-items: center;
+      min-height: 72px;
+      padding: 8px 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .fruit-card:hover {
+      border-color: #91c9bd;
+      background: #f2fbf8;
+      box-shadow: 0 5px 14px rgba(15, 118, 110, 0.09);
+    }
+
+    .fruit-card.is-dragging {
+      opacity: 0.55;
+    }
+
+    .fruit-card .fruit-svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    .fruit-card-copy {
+      display: grid;
+      min-width: 0;
+      line-height: 1.2;
+    }
+
+    .fruit-card-name {
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fruit-card-weight {
+      margin-top: 3px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fruit-add-mark {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      color: #ffffff;
+      background: var(--teal);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .simulator-shell {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .simulator-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 54px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .simulator-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .simulator-title svg {
+      width: 22px;
+      height: 22px;
+      color: var(--teal);
+      flex: 0 0 auto;
+    }
+
+    .sim-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .small-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 44px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .small-action:hover {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+    }
+
+    .small-action svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .scale-stage {
+      --beam-angle: 0deg;
+      --left-pan-y: 0px;
+      --right-pan-y: 0px;
+      position: relative;
+      height: 470px;
+      margin: 0 10px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .scale-stage::before {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      bottom: 21px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(23, 48, 66, 0.12);
+      filter: blur(7px);
+    }
+
+    .scale-base {
+      position: absolute;
+      left: 50%;
+      bottom: 27px;
+      z-index: 2;
+      width: min(470px, 68%);
+      height: 92px;
+      border: 3px solid #28373d;
+      border-radius: 14px 14px 40px 40px / 12px 12px 27px 27px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0 5%, transparent 6%),
+        linear-gradient(145deg, #7b8284 0%, #5b6265 42%, #414a4e 100%);
+      box-shadow:
+        inset 0 7px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -12px 14px rgba(20, 28, 31, 0.22),
+        0 11px 0 rgba(36, 47, 51, 0.2),
+        0 17px 24px rgba(23, 48, 66, 0.18);
+      transform: translateX(-50%);
+    }
+
+    .scale-base::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -12px;
+      width: 74%;
+      height: 34px;
+      border: 3px solid #344249;
+      border-bottom-width: 2px;
+      border-radius: 50% 50% 7px 7px / 55% 55% 7px 7px;
+      background: linear-gradient(180deg, #b8bdbe 0%, #7f8789 45%, #596266 100%);
+      box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.25);
+      transform: translateX(-50%);
+    }
+
+    .scale-base::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 44px;
+      width: 35%;
+      height: 31px;
+      border: 2px solid #767d7d;
+      border-radius: 4px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(231, 228, 214, 0.8)),
+        #ece8dc;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.3);
+      transform: translateX(-50%);
+    }
+
+    .scale-post {
+      position: absolute;
+      left: 50%;
+      top: 244px;
+      bottom: 94px;
+      z-index: 1;
+      width: 26px;
+      border: 3px solid #28373d;
+      border-radius: 5px 5px 8px 8px;
+      background: linear-gradient(90deg, #454f53 0%, #adb4b4 38%, #737c7f 58%, #333d41 100%);
+      box-shadow:
+        inset 3px 0 0 rgba(255, 255, 255, 0.17),
+        2px 0 0 rgba(23, 48, 66, 0.08);
+      transform: translateX(-50%);
+    }
+
+    .scale-post::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -102px;
+      width: 16px;
+      height: 104px;
+      border: 3px solid #28373d;
+      border-radius: 9px 9px 4px 4px;
+      background: linear-gradient(90deg, #3e484c, #aab1b1 48%, #4c565a);
+      transform: translateX(-50%);
+    }
+
+    .scale-post::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -119px;
+      width: 40px;
+      height: 18px;
+      border: 3px solid #28373d;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #eff2ec, #9ca5a5 58%, #697276);
+      box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.55);
+      transform: translateX(-50%);
+    }
+
+    .scale-beam {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 244px;
+      z-index: 4;
+      height: 17px;
+      border: 3px solid #28373d;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #b5babc 0%, #697275 32%, #3e484c 74%, #252f33 100%);
+      box-shadow:
+        inset 0 3px 0 rgba(255, 255, 255, 0.22),
+        0 4px 0 rgba(23, 48, 66, 0.12);
+      transform: rotate(var(--beam-angle));
+      transform-origin: center;
+      transition: transform 420ms cubic-bezier(0.22, 0.85, 0.35, 1);
+    }
+
+    .scale-beam::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 34px;
+      height: 34px;
+      border: 3px solid #28373d;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f7f8f4 0 12%, #a9afaf 30%, #5c6568 72%, #303a3e 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.45),
+        0 2px 5px rgba(23, 48, 66, 0.2);
+      transform: translate(-50%, -50%);
+    }
+
+    .scale-beam::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #28373d;
+      background: #e8ebe6;
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .beam-hook {
+      position: absolute;
+      top: -19px;
+      width: 15px;
+      height: 27px;
+      border: 3px solid #28373d;
+      border-radius: 50%;
+      background: linear-gradient(90deg, #505a5e, #e5e8e4 48%, #667074);
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .beam-hook.left {
+      left: -9px;
+    }
+
+    .beam-hook.right {
+      right: -9px;
+    }
+
+    .pan-unit {
+      position: absolute;
+      top: 24px;
+      z-index: 5;
+      width: 42%;
+      max-width: 390px;
+      transition: transform 420ms cubic-bezier(0.22, 0.85, 0.35, 1), filter 180ms ease;
+    }
+
+    .pan-unit.left {
+      left: 0;
+      transform: translateY(var(--left-pan-y));
+    }
+
+    .pan-unit.right {
+      right: 0;
+      transform: translateY(var(--right-pan-y));
+    }
+
+    .pan-unit.drop-hover {
+      filter: drop-shadow(0 0 11px rgba(15, 118, 110, 0.38));
+    }
+
+    .pan-unit.drop-hover .pan-bowl::before,
+    .pan-unit.drop-hover .pan-bowl::after {
+      border-color: var(--teal);
+      background: #e9faf6;
+    }
+
+    .pan-hanger {
+      position: absolute;
+      left: 50%;
+      top: 132px;
+      z-index: 1;
+      width: 68%;
+      height: 116px;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    .pan-hanger::before,
+    .pan-hanger::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 6px;
+      height: 111px;
+      border: 2px solid #344248;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #535d60 0%, #d1d5d3 45%, #687174 100%);
+      box-shadow: 1px 0 0 rgba(255, 255, 255, 0.22);
+      transform-origin: top;
+    }
+
+    .pan-hanger::before {
+      left: 22%;
+      transform: rotate(-9deg);
+    }
+
+    .pan-hanger::after {
+      right: 22%;
+      transform: rotate(9deg);
+    }
+
+    .pan-bowl {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      height: 186px;
+      min-height: 186px;
+      margin-top: 0;
+      padding: 30px 9px 58px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      overflow: visible;
+    }
+
+    .pan-bowl::before {
+      content: "";
+      position: absolute;
+      left: 1%;
+      right: 1%;
+      bottom: 0;
+      z-index: 0;
+      height: 44px;
+      border: 3px solid #5b686d;
+      border-radius: 8% 8% 48% 48% / 12% 12% 78% 78%;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f6ef 48%, #d7d8d2 100%);
+      box-shadow:
+        inset 0 5px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -6px 7px rgba(73, 84, 86, 0.12),
+        0 8px 12px rgba(23, 48, 66, 0.16);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .pan-bowl::after {
+      content: "";
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: 27px;
+      z-index: 1;
+      height: 28px;
+      border: 2px solid #849094;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #f9faf5 0%, #eceee8 58%, #d4d7d2 100%);
+      box-shadow:
+        inset 0 4px 0 rgba(255, 255, 255, 0.96),
+        inset 0 -3px 5px rgba(73, 84, 86, 0.1);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .pan-label {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: max-content;
+      max-width: 100%;
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      transform: translateX(-50%);
+    }
+
+    .pan-weight-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      color: var(--ink);
+      background: var(--yellow-soft);
+      font-size: 12px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .pan-items {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 56px;
+      z-index: 3;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 154px;
+      padding: 0 5px;
+      overflow: visible;
+    }
+
+    .pan-pile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .pan-pile-row {
+      position: relative;
+      display: flex;
+      flex: 0 0 38px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      height: 38px;
+      pointer-events: none;
+    }
+
+    .pan-pile-row .pan-fruit {
+      flex: 0 0 64px;
+      pointer-events: auto;
+    }
+
+    .pan-pile-row .pan-fruit + .pan-fruit {
+      margin-left: -7px;
+    }
+
+    .pan-empty {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 72px;
+      color: #73878e;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .pan-fruit {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      padding: 1px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+    }
+
+    .pan-fruit:hover {
+      border-color: var(--red);
+      background: var(--red-soft);
+      transform: translateY(-2px);
+    }
+
+    .pan-fruit .fruit-svg {
+      width: 56px;
+      height: 56px;
+      filter: drop-shadow(0 3px 2px rgba(23, 48, 66, 0.16));
+    }
+
+    .pan-total {
+      position: absolute;
+      left: 50%;
+      bottom: -12px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 25px;
+      margin: 0;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.96);
+      font-size: 12px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+
+    .comparison-strip {
+      display: grid;
+      grid-template-columns: minmax(92px, 0.8fr) minmax(170px, 1.5fr) minmax(92px, 0.8fr);
+      align-items: center;
+      gap: 10px;
+      margin: 0 12px 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #edf6f3;
+    }
+
+    .total-chip {
+      display: grid;
+      justify-items: center;
+      gap: 1px;
+      line-height: 1.1;
+    }
+
+    .total-chip span {
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .total-chip strong {
+      font-size: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comparison-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 48px;
+      padding: 7px 10px;
+      border: 1px solid #c2d9d3;
+      border-radius: 8px;
+      background: #ffffff;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .comparison-symbol {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ffffff;
+      background: var(--teal);
+      font-size: 20px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .comparison-strip.is-balanced .comparison-message {
+      border-color: #84c9b8;
+      background: #e6faf3;
+      color: var(--teal-dark);
+    }
+
+    .comparison-strip.is-left-heavy .comparison-symbol {
+      background: var(--orange);
+    }
+
+    .comparison-strip.is-right-heavy .comparison-symbol {
+      background: var(--blue);
+    }
+
+    .weights-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .weights-panel {
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .weights-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 62px;
+      padding: 10px 14px;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      transition: background 160ms ease;
+    }
+
+    .weights-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .weights-summary:hover {
+      background: #f2f9f6;
+    }
+
+    .weights-summary-main {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .weights-summary-icon {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      flex: 0 0 auto;
+    }
+
+    .weights-summary-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .weights-summary h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .weights-summary p {
+      margin: 3px 0 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+
+    .weights-toggle {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--paper);
+      flex: 0 0 auto;
+    }
+
+    .weights-toggle::before,
+    .weights-toggle::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 14px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--teal-dark);
+      transform: translate(-50%, -50%);
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    .weights-toggle::after {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+
+    .weights-panel[open] .weights-summary {
+      border-bottom: 1px solid var(--line);
+      background: #f2f9f6;
+    }
+
+    .weights-panel[open] .weights-toggle {
+      border-color: var(--teal);
+      background: var(--teal);
+    }
+
+    .weights-panel[open] .weights-toggle::before,
+    .weights-panel[open] .weights-toggle::after {
+      background: #ffffff;
+    }
+
+    .weights-panel[open] .weights-toggle::after {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    .weights-panel .weights-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 4px 18px;
+    }
+
+    .weight-row {
+      display: grid;
+      grid-template-columns: 38px minmax(46px, 1fr) auto;
+      align-items: center;
+      gap: 6px;
+      min-height: 48px;
+      padding: 5px 0;
+      border-bottom: 1px dashed #dce5e2;
+    }
+
+    .weight-row:last-child {
+      border-bottom: 0;
+    }
+
+    .weight-row .fruit-svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .weight-name {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .weight-stepper {
+      display: grid;
+      grid-template-columns: 34px 54px 34px;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .step-button {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f7faf9;
+      font-size: 18px;
+      font-weight: 850;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    }
+
+    .step-button:hover {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .weight-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 3px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--ink);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+    }
+
+    .weight-input::-webkit-outer-spin-button,
+    .weight-input::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .exercise-panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .exercise-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .exercise-title {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .exercise-number {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ffffff;
+      background: var(--teal);
+      font-size: 16px;
+      font-weight: 850;
+      flex: 0 0 auto;
+    }
+
+    .exercise-title h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .exercise-title p {
+      margin: 4px 0 0;
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+
+    .exercise-body {
+      padding: 18px 16px;
+    }
+
+    .rank-choices {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .rank-fruit {
+      display: grid;
+      justify-items: center;
+      gap: 3px;
+      min-height: 112px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfc;
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, opacity 160ms ease, transform 160ms ease;
+    }
+
+    .rank-fruit:hover:not(:disabled) {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .rank-fruit.is-used {
+      opacity: 0.4;
+    }
+
+    .rank-fruit .fruit-svg {
+      width: 72px;
+      height: 72px;
+    }
+
+    .rank-fruit span {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      padding: 12px;
+      border: 2px dashed #a9c7c0;
+      border-radius: 8px;
+      background: #f8fcfa;
+    }
+
+    .rank-slot {
+      display: grid;
+      place-items: center;
+      min-height: 104px;
+      padding: 6px;
+      border: 1px solid #bfd5d0;
+      border-radius: 6px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .rank-slot:hover {
+      border-color: var(--teal);
+      background: #f1fbf8;
+    }
+
+    .rank-slot .fruit-svg {
+      width: 65px;
+      height: 65px;
+    }
+
+    .rank-slot strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .rank-placeholder {
+      color: #8ba09f;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .rank-symbol {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .exercise-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .check-button {
+      padding: 0 18px;
+      border-color: var(--teal-dark);
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .check-button:hover {
+      background: var(--teal-dark);
+    }
+
+    .feedback {
+      min-height: 28px;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .feedback.is-success {
+      color: var(--teal-dark);
+    }
+
+    .feedback.is-error {
+      color: var(--red);
+    }
+
+    .equation-box {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.8fr) 42px minmax(180px, 1.2fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 230px;
+      padding: 16px;
+      border: 2px dashed #a9c7c0;
+      border-radius: 8px;
+      background: #f8fcfa;
+    }
+
+    .equation-side {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+    }
+
+    .equation-fruit {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 146px;
+      padding: 10px;
+      border: 1px solid #c8dbd6;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .equation-fruit .fruit-svg {
+      width: 112px;
+      height: 112px;
+    }
+
+    .equation-side strong {
+      font-size: 14px;
+    }
+
+    .equals-sign {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 850;
+    }
+
+    .banana-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-content: center;
+      gap: 2px;
+      width: 100%;
+      min-height: 112px;
+    }
+
+    .banana-list .fruit-svg {
+      width: 39px;
+      height: 39px;
+    }
+
+    .banana-controls {
+      display: grid;
+      grid-template-columns: 42px 72px 42px;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .banana-controls .step-button {
+      width: 42px;
+      height: 44px;
+    }
+
+    .banana-value {
+      display: grid;
+      place-items: center;
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #ffffff;
+      font-size: 21px;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .weight-note {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .weight-note span {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef4f1;
+    }
+
+    .substitution-sheet {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .substitution-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--yellow-soft);
+    }
+
+    .substitution-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 2px solid #ddb532;
+      border-radius: 8px;
+      background: var(--yellow);
+      flex: 0 0 auto;
+    }
+
+    .substitution-icon svg {
+      width: 27px;
+      height: 27px;
+    }
+
+    .substitution-banner strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .substitution-banner span {
+      display: block;
+      margin-top: 1px;
+      color: #665a31;
+      font-size: 13px;
+    }
+
+    .visual-demo {
+      padding: 18px 20px 16px;
+      border-bottom: 1px dashed #9db8b2;
+      background: #fbfdfc;
+    }
+
+    .visual-demo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .visual-demo-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .demo-eyebrow {
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--yellow);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .visual-demo-title h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .demo-switch {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef4f1;
+    }
+
+    .demo-switch-button {
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink-soft);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .demo-switch-button:hover {
+      border-color: #9fc7bf;
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .demo-switch-button:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    .demo-switch-button[aria-pressed="true"] {
+      border-color: var(--teal-dark);
+      background: var(--teal);
+      color: #ffffff;
+    }
+
+    .demo-storyboard {
+      display: grid;
+      grid-template-columns: minmax(140px, 0.72fr) minmax(150px, 0.68fr) minmax(0, 1.6fr);
+      align-items: stretch;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .demo-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 170px;
+      padding: 12px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .demo-panel-label {
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .demo-source-fruits {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 108px;
+    }
+
+    .demo-source-fruit {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 66px;
+      aspect-ratio: 1;
+    }
+
+    .demo-source-fruit .fruit-svg {
+      width: 62px;
+      height: 62px;
+    }
+
+    .demo-source-number {
+      position: absolute;
+      right: 0;
+      bottom: 3px;
+      display: grid;
+      place-items: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 5px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--yellow);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .demo-conversion {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 8px 2px;
+      text-align: center;
+    }
+
+    .demo-arrow {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--yellow);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .demo-rule {
+      max-width: 150px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .demo-orange-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .demo-orange-group {
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      min-width: 0;
+      min-height: 100px;
+      padding: 7px 4px;
+      border: 1px solid #e1c894;
+      border-radius: 6px;
+      background: #fffaf0;
+    }
+
+    .demo-group-label {
+      overflow: hidden;
+      max-width: 100%;
+      color: var(--ink-soft);
+      font-size: 10px;
+      font-weight: 750;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .demo-orange-icons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      min-height: 34px;
+    }
+
+    .demo-orange-icons .fruit-svg {
+      width: 31px;
+      height: 31px;
+    }
+
+    .demo-group-count {
+      color: #9a4d0b;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .demo-total {
+      align-self: flex-end;
+      margin-top: auto;
+      padding: 7px 10px;
+      border: 1px solid #9fc7bf;
+      border-radius: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      font-size: 14px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .demo-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .demo-caption {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .demo-play {
+      min-width: 132px;
+      flex: 0 0 auto;
+    }
+
+    .visual-demo.is-revealed .demo-source-fruit {
+      animation: demo-fruit-in 260ms ease both;
+      animation-delay: calc(var(--item-index) * 75ms);
+    }
+
+    .visual-demo.is-revealed .demo-orange-group {
+      animation: demo-orange-in 320ms cubic-bezier(0.2, 0.78, 0.3, 1) both;
+      animation-delay: calc(var(--group-index) * 110ms);
+    }
+
+    @keyframes demo-fruit-in {
+      from {
+        opacity: 0;
+        transform: translateY(7px) scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes demo-orange-in {
+      from {
+        opacity: 0;
+        transform: translateY(-9px) scale(0.82);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .relation-samples {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0;
+      border-bottom: 1px dashed #9db8b2;
+    }
+
+    .relation-sample {
+      min-width: 0;
+      padding: 18px 20px 20px;
+    }
+
+    .relation-sample + .relation-sample {
+      border-left: 1px dashed #b9cbc7;
+    }
+
+    .sample-caption {
+      margin: 0 0 10px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .mini-scale {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr);
+      align-items: end;
+      min-height: 150px;
+      padding-top: 8px;
+    }
+
+    .mini-pan {
+      display: grid;
+      place-items: center;
+      min-height: 94px;
+      padding: 8px;
+      border: 4px solid var(--ink);
+      border-radius: 6px 6px 28px 28px;
+      background: #ffffff;
+    }
+
+    .mini-fruits {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+    }
+
+    .mini-fruits .fruit-svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .mini-scale-center {
+      position: relative;
+      align-self: stretch;
+      min-height: 124px;
+    }
+
+    .mini-beam {
+      position: absolute;
+      left: -36px;
+      right: -36px;
+      top: 20px;
+      height: 9px;
+      border: 3px solid var(--ink);
+      border-radius: 999px;
+      background: var(--yellow);
+    }
+
+    .mini-post {
+      position: absolute;
+      left: 50%;
+      top: 27px;
+      bottom: 0;
+      width: 10px;
+      border: 3px solid var(--ink);
+      border-radius: 5px;
+      background: #dceee9;
+      transform: translateX(-50%);
+    }
+
+    .mini-post::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -13px;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--ink);
+      border-radius: 50%;
+      background: #ffffff;
+      transform: translateX(-50%);
+    }
+
+    .mini-post::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      width: 72px;
+      height: 12px;
+      border: 3px solid var(--ink);
+      border-radius: 50%;
+      background: #eef5f3;
+      transform: translateX(-50%);
+    }
+
+    .substitution-header,
+    .substitution-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 0.95fr) 110px;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .substitution-header {
+      min-height: 44px;
+      padding: 0 18px;
+      color: var(--ink-soft);
+      background: #eef4f1;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .substitution-row {
+      min-height: 130px;
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .substitution-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      min-height: 88px;
+      padding: 8px;
+      border: 2px solid var(--ink);
+      border-radius: 6px 6px 28px 28px;
+      background: #fbfdfc;
+    }
+
+    .substitution-left .fruit-svg {
+      width: 56px;
+      height: 56px;
+    }
+
+    .substitution-row.is-correct {
+      background: #edfbf6;
+    }
+
+    .substitution-row.is-wrong {
+      background: #fff6f7;
+    }
+
+    .substitution-expression {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .substitution-expression small {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .answer-control {
+      display: grid;
+      grid-template-columns: 40px minmax(64px, 86px) 40px;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .answer-control .step-button {
+      width: 40px;
+      height: 44px;
+    }
+
+    .answer-input {
+      width: 100%;
+      height: 44px;
+      border: 2px solid var(--line-strong);
+      border-radius: 6px;
+      background: #ffffff;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+    }
+
+    .answer-input::-webkit-outer-spin-button,
+    .answer-input::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .row-result {
+      min-height: 30px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .row-result.correct {
+      color: var(--teal-dark);
+    }
+
+    .row-result.wrong {
+      color: var(--red);
+    }
+
+    .substitution-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+      background: #fbfdfc;
+    }
+
+    .substitution-footer .feedback {
+      margin: 0;
+    }
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .confetti-bit {
+      position: fixed;
+      width: 10px;
+      height: 16px;
+      border-radius: 2px;
+      animation: confetti-burst 720ms cubic-bezier(0.18, 0.78, 0.3, 1) forwards;
+    }
+
+    @keyframes confetti-burst {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) rotate(var(--rot));
+      }
+    }
+
+    @keyframes card-enter {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mode-panel:not([hidden]) {
+      animation: card-enter 260ms ease both;
+    }
+
+    @media (max-width: 1200px) {
+      .lab-layout {
+        grid-template-columns: 230px minmax(0, 1fr);
+      }
+
+      .weights-panel {
+        margin-bottom: 12px;
+      }
+
+      .weights-body {
+        padding: 10px 12px 12px;
+      }
+
+      .weights-panel .weights-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 18px;
+      }
+
+      .weight-row {
+        border-bottom-style: solid;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        padding: 16px 14px 24px;
+      }
+
+      .hero {
+        align-items: flex-start;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .progress-box,
+      .reset-button {
+        min-height: 50px;
+      }
+
+      .mode-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      .mode-tab {
+        padding: 0 10px;
+        font-size: 14px;
+      }
+
+      .lab-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .fruit-picker {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .weights-panel .weights-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .exercise-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-storyboard {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-panel {
+        min-height: 150px;
+      }
+
+      .demo-conversion {
+        flex-direction: row;
+        min-height: 72px;
+      }
+
+      .demo-rule {
+        max-width: 220px;
+        text-align: left;
+      }
+
+      .relation-samples {
+        grid-template-columns: 1fr;
+      }
+
+      .relation-sample + .relation-sample {
+        border-top: 1px dashed #b9cbc7;
+        border-left: 0;
+      }
+
+      .substitution-header {
+        display: none;
+      }
+
+      .substitution-row {
+        grid-template-columns: minmax(110px, 0.8fr) minmax(160px, 1.2fr);
+      }
+
+      .row-result {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        padding: 12px 10px 22px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 14px;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        width: 100%;
+      }
+
+      .hero-copy {
+        font-size: 14px;
+      }
+
+      .progress-box {
+        justify-content: space-between;
+      }
+
+      .mode-tabs {
+        gap: 2px;
+      }
+
+      .mode-tab {
+        display: grid;
+        gap: 3px;
+        min-height: 58px;
+        padding: 6px 4px;
+        font-size: 12px;
+      }
+
+      .mode-tab svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .mode-intro {
+        display: grid;
+        gap: 8px;
+      }
+
+      .mode-kicker {
+        justify-self: start;
+      }
+
+      .fruit-picker {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .scale-stage {
+        height: 410px;
+        margin: 0 4px;
+      }
+
+      .scale-beam {
+        left: 7%;
+        right: 7%;
+        top: 222px;
+        height: 14px;
+      }
+
+      .scale-base {
+        bottom: 24px;
+        width: 78%;
+        height: 76px;
+      }
+
+      .scale-post {
+        top: 222px;
+        bottom: 82px;
+        width: 20px;
+      }
+
+      .scale-post::before {
+        top: -79px;
+        width: 13px;
+        height: 81px;
+      }
+
+      .scale-post::after {
+        top: -96px;
+        width: 32px;
+        height: 15px;
+      }
+
+      .scale-base::before {
+        height: 29px;
+      }
+
+      .scale-base::after {
+        top: 36px;
+        width: 45%;
+        height: 25px;
+      }
+
+      .pan-unit {
+        top: 22px;
+        width: 45%;
+      }
+
+      .pan-hanger {
+        top: 109px;
+        width: 66%;
+        height: 98px;
+      }
+
+      .pan-hanger::after,
+      .pan-hanger::before {
+        width: 5px;
+        height: 94px;
+      }
+
+      .pan-bowl {
+        height: 168px;
+        min-height: 168px;
+        margin-top: 0;
+        padding: 27px 5px 51px;
+      }
+
+      .pan-bowl::before {
+        bottom: 0;
+        height: 38px;
+        border-width: 2px;
+      }
+
+      .pan-bowl::after {
+        bottom: 24px;
+        height: 24px;
+        border-width: 2px;
+      }
+
+      .pan-items {
+        bottom: 49px;
+        height: 132px;
+        padding: 0 2px;
+      }
+
+      .pan-pile-row {
+        flex-basis: 30px;
+        height: 30px;
+      }
+
+      .pan-pile-row .pan-fruit {
+        flex-basis: 48px;
+      }
+
+      .pan-pile-row .pan-fruit + .pan-fruit {
+        margin-left: -10px;
+      }
+
+      .pan-fruit {
+        width: 48px;
+        height: 48px;
+      }
+
+      .pan-fruit .fruit-svg {
+        width: 42px;
+        height: 42px;
+      }
+
+      .pan-label {
+        top: 1px;
+        font-size: 10px;
+      }
+
+      .pan-total {
+        bottom: -10px;
+        min-height: 22px;
+        padding: 0 7px;
+        font-size: 10px;
+      }
+
+      .sim-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .small-action {
+        min-height: 44px;
+        padding: 0 9px;
+      }
+
+      .weights-panel .weights-list {
+        grid-template-columns: 1fr;
+      }
+
+      .weight-stepper {
+        grid-template-columns: 44px 62px 44px;
+      }
+
+      .step-button {
+        width: 44px;
+        height: 44px;
+      }
+
+      .weight-input {
+        height: 44px;
+      }
+
+      .comparison-strip {
+        grid-template-columns: 1fr 1.4fr 1fr;
+        gap: 5px;
+        margin: 0 8px 8px;
+        padding: 8px 5px;
+      }
+
+      .comparison-message {
+        gap: 5px;
+        padding: 6px;
+        font-size: 12px;
+      }
+
+      .comparison-symbol {
+        width: 26px;
+        height: 26px;
+        font-size: 17px;
+      }
+
+      .total-chip strong {
+        font-size: 18px;
+      }
+
+      .weights-list {
+        grid-template-columns: 1fr;
+      }
+
+      .weight-row {
+        grid-template-columns: 38px minmax(80px, 1fr) auto;
+      }
+
+      .visual-demo {
+        padding: 14px 12px;
+      }
+
+      .visual-demo-header {
+        display: grid;
+        gap: 10px;
+      }
+
+      .demo-switch {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      .demo-switch-button {
+        padding: 0 8px;
+        font-size: 13px;
+      }
+
+      .demo-storyboard {
+        gap: 8px;
+      }
+
+      .demo-source-fruit {
+        width: 55px;
+      }
+
+      .demo-source-fruit .fruit-svg {
+        width: 52px;
+        height: 52px;
+      }
+
+      .demo-orange-groups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .demo-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .demo-play {
+        width: 100%;
+      }
+
+      .exercise-header {
+        display: grid;
+      }
+
+      .rank-row {
+        gap: 4px;
+        padding: 8px;
+      }
+
+      .rank-slot {
+        min-height: 82px;
+      }
+
+      .rank-slot .fruit-svg {
+        width: 48px;
+        height: 48px;
+      }
+
+      .rank-symbol {
+        font-size: 22px;
+      }
+
+      .equation-box {
+        grid-template-columns: 1fr 32px 1.25fr;
+        min-height: 205px;
+        padding: 10px 7px;
+      }
+
+      .equation-fruit {
+        min-height: 124px;
+        padding: 5px;
+      }
+
+      .equation-fruit .fruit-svg {
+        width: 90px;
+        height: 90px;
+      }
+
+      .equals-sign {
+        font-size: 26px;
+      }
+
+      .banana-list .fruit-svg {
+        width: 30px;
+        height: 30px;
+      }
+
+      .banana-controls {
+        grid-template-columns: 38px 58px 38px;
+      }
+
+      .banana-controls .step-button {
+        width: 38px;
+        height: 42px;
+      }
+
+      .mini-scale {
+        grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+      }
+
+      .mini-fruits .fruit-svg {
+        width: 39px;
+        height: 39px;
+      }
+
+      .mini-beam {
+        left: -27px;
+        right: -27px;
+      }
+
+      .substitution-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .substitution-expression {
+        font-size: 20px;
+      }
+
+      .row-result {
+        min-height: 24px;
+        text-align: center;
+      }
+
+      .substitution-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .substitution-footer .check-button {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="icon-scale" viewBox="0 0 24 24">
+        <path d="M12 3v4M5 19h14M7 19l2-9h6l2 9M5 10h14M12 7v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10l-2.3 4.2a2.8 2.8 0 0 0 4.6 0L5 10ZM19 10l-2.3 4.2a2.8 2.8 0 0 0 4.6 0L19 10Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-bars" viewBox="0 0 24 24">
+        <path d="M5 18V9M12 18V4M19 18v-6M3 21h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-equals" viewBox="0 0 24 24">
+        <path d="M4 9h16M4 15h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-reset" viewBox="0 0 24 24">
+        <path d="M4 4v6h6M5.5 15.5A7.5 7.5 0 1 0 6 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-eraser" viewBox="0 0 24 24">
+        <path d="m4 15 7.5-9.5a2 2 0 0 1 2.8-.3l4.9 3.9a2 2 0 0 1 .3 2.8L11 21H6.5L4 18.4a2.4 2.4 0 0 1 0-3.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="m10 9 8 6.4M10.5 21H20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-star" viewBox="0 0 24 24">
+        <path d="m12 2.8 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9L6.4 20l1.1-6.2L3 9.4l6.2-.9L12 2.8Z"/>
+      </symbol>
+      <symbol id="icon-pencil" viewBox="0 0 24 24">
+        <path d="m4 20 4.2-1 10.5-10.5a2 2 0 0 0 0-2.8l-.4-.4a2 2 0 0 0-2.8 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="m13.8 7.2 3 3" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24">
+        <path d="M8 5.8v12.4L18 12 8 5.8Z" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="fruit-pineapple" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M50 7c-5 6-7 12-5 21 8-4 13-10 14-19-7 1-9 3-9 3Z" fill="#38a169"/>
+          <path d="M49 15c-9-8-20-6-24 1 8 1 12 4 15 11M53 15c9-8 19-5 22 2-8 1-12 4-15 10M50 5c-1 7 0 15 3 22" fill="#4caf50"/>
+          <path d="M28 39c0-16 10-26 22-26 14 0 23 11 23 27 0 24-10 48-23 48S28 63 28 39Z" fill="#f6c84c"/>
+          <path d="M37 24c-2 23 0 44 8 60M63 24c2 23 0 44-8 60M29 39c16 2 30 0 43-5M29 53c14 2 30 0 44-6M32 68c12 2 24 0 34-5" fill="none" stroke="#cf8a25" stroke-width="2.2"/>
+          <path d="M38 29c4 2 7 2 11 2" fill="none" stroke="#fff0a8" stroke-width="3"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-orange" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="54" r="34" fill="#f28c28"/>
+          <path d="M50 20c1-9 6-13 14-13-1 8-5 13-14 13Z" fill="#4caf50"/>
+          <path d="M51 23c-2-6-1-11 2-16" fill="none"/>
+          <path d="M30 46c6-11 16-16 28-16" fill="none" stroke="#ffd08a" stroke-width="5" opacity=".8"/>
+          <path d="M32 69c7 10 16 14 28 14" fill="none" stroke="#c45f14" stroke-width="2"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-pear" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M51 25c5-10 11-13 19-12-2 8-7 13-16 14" fill="#55a86b"/>
+          <path d="M50 20c-1-6 1-10 4-13" fill="none"/>
+          <path d="M51 23c7 0 11 7 11 15 0 8 17 17 15 34-2 16-13 22-27 22S25 88 23 72c-2-17 15-26 15-34 0-8 5-15 13-15Z" fill="#d7df58"/>
+          <path d="M34 65c3 12 9 19 19 22" fill="none" stroke="#98aa2d" stroke-width="3"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-apple" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M50 28c-7-8-18-9-27-2C10 36 13 69 29 84c7 7 16 5 21-2 5 7 14 9 21 2 16-15 19-48 6-58-9-7-20-6-27 2Z" fill="#dc3f4f"/>
+          <path d="M50 26c0-9 4-15 12-18" fill="none"/>
+          <path d="M51 20c6-10 15-12 23-8-5 8-12 12-23 8Z" fill="#57a85f"/>
+          <path d="M31 42c-4 8-3 18 1 25" fill="none" stroke="#f3828e" stroke-width="5" opacity=".8"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-melon" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="56" r="35" fill="#50ad67"/>
+          <path d="M50 23c0-8 4-13 11-16" fill="none"/>
+          <path d="M22 44c11 18 15 37 11 55M36 25c9 23 10 47 3 68M66 24c-8 22-8 47 1 69M82 38C69 59 65 80 68 94" fill="none" stroke="#26804a" stroke-width="5"/>
+          <path d="M29 45c5-10 12-16 21-20" fill="none" stroke="#93dd9e" stroke-width="3" opacity=".8"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-grapes" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M51 26c4-11 14-16 25-11-4 9-12 14-23 13Z" fill="#59a867"/>
+          <path d="M51 28c-2-8 0-15 5-20" fill="none"/>
+          <circle cx="39" cy="34" r="13" fill="#8e4db3"/>
+          <circle cx="60" cy="34" r="13" fill="#7540a0"/>
+          <circle cx="28" cy="51" r="13" fill="#9a58bc"/>
+          <circle cx="49" cy="50" r="14" fill="#8247aa"/>
+          <circle cx="70" cy="50" r="13" fill="#6c3896"/>
+          <circle cx="38" cy="67" r="13" fill="#8d4db0"/>
+          <circle cx="59" cy="67" r="13" fill="#75409e"/>
+          <circle cx="49" cy="82" r="12" fill="#8244a8"/>
+          <circle cx="34" cy="47" r="4" fill="#d9b5e7" stroke="none" opacity=".8"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-banana" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 24c3 35 20 55 53 53 12-1 17-6 15-12-2-5-8-7-16-5-21 6-33-7-34-38 0-5-4-7-8-6-5 1-10 3-10 8Z" fill="#f5d84e"/>
+          <path d="M22 21c2-5 9-6 12-2 1 2 0 4-3 5" fill="#f4efc6"/>
+          <path d="M84 68c4 0 6 3 5 6" fill="none"/>
+          <path d="M30 30c4 21 16 34 37 35" fill="none" stroke="#c59f17" stroke-width="2.4"/>
+        </g>
+      </symbol>
+      <symbol id="fruit-strawberry" viewBox="0 0 100 100">
+        <g stroke="#233441" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M50 89C36 80 20 60 22 42c2-13 13-17 28-12 15-5 26-1 28 12 2 18-14 38-28 47Z" fill="#e5484d"/>
+          <path d="M50 31c-3-9-1-17 6-23M50 31c-8-8-17-8-25-4 6 6 13 9 25 4ZM50 31c8-8 17-8 25-4-6 6-13 9-25 4Z" fill="#55a85f"/>
+          <g fill="#ffe487" stroke="none">
+            <circle cx="36" cy="47" r="2.5"/><circle cx="52" cy="43" r="2.5"/><circle cx="66" cy="49" r="2.5"/>
+            <circle cx="43" cy="58" r="2.5"/><circle cx="59" cy="57" r="2.5"/><circle cx="51" cy="69" r="2.5"/>
+          </g>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-main">
+        <div class="eyebrow">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-scale"></use></svg>
+          数学探索课
+        </div>
+        <p class="hero-copy">放水果、改重量、找等量关系，让天平告诉你答案。</p>
+      </div>
+      <div class="hero-actions">
+        <div class="progress-box" aria-label="闯关进度" aria-live="polite">
+          <div class="progress-label">
+            <span>闯关进度</span>
+            <strong id="progressText">0 / 3</strong>
+          </div>
+          <div class="stars" id="stars" aria-hidden="true"></div>
+        </div>
+        <button class="reset-button" id="resetAll" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-reset"></use></svg>
+          重置全部
+        </button>
+      </div>
+    </header>
+
+    <nav class="mode-tabs" role="tablist" aria-label="课件模式">
+      <button class="mode-tab" id="tab-lab" type="button" role="tab" aria-selected="true" aria-controls="panel-lab" data-mode="lab">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-scale"></use></svg>
+        天平实验室
+      </button>
+      <button class="mode-tab" id="tab-rank" type="button" role="tab" aria-selected="false" aria-controls="panel-rank" data-mode="rank" tabindex="-1">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-bars"></use></svg>
+        比轻重
+      </button>
+      <button class="mode-tab" id="tab-substitution" type="button" role="tab" aria-selected="false" aria-controls="panel-substitution" data-mode="substitution" tabindex="-1">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-equals"></use></svg>
+        等量代换
+      </button>
+    </nav>
+
+    <main>
+      <section class="mode-panel" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab">
+        <div class="mode-intro">
+          <div>
+            <h2>把水果放上天平</h2>
+            <p>先选左边或右边，再点击水果；也可以把水果直接拖进秤盘。</p>
+          </div>
+          <span class="mode-kicker">点击水果：增加 1 个</span>
+        </div>
+
+        <details class="tool-panel weights-panel" id="weightsPanel">
+          <summary class="weights-summary">
+            <span class="weights-summary-main">
+              <span class="weights-summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><use href="#icon-scale"></use></svg>
+              </span>
+              <span>
+                <h3>重量赋值</h3>
+                <p>数字改变后，天平会立即更新</p>
+              </span>
+            </span>
+            <span class="weights-toggle" aria-hidden="true"></span>
+          </summary>
+          <div class="weights-body">
+            <div class="weights-list" id="weightsList"></div>
+          </div>
+        </details>
+
+        <div class="lab-layout">
+          <aside class="tool-panel picker-panel" aria-label="水果篮">
+            <div class="tool-heading">
+              <div>
+                <h3>水果篮</h3>
+                <p>类型和数量都可以改变</p>
+              </div>
+              <span class="side-target" id="sideTarget">放入左盘</span>
+            </div>
+            <div class="picker-body">
+              <div class="side-switch" role="group" aria-label="选择要放入的天平一侧">
+                <button class="side-button" type="button" data-side="left" aria-pressed="true">
+                  <span aria-hidden="true"></span>左盘
+                </button>
+                <button class="side-button" type="button" data-side="right" aria-pressed="false">
+                  <span aria-hidden="true"></span>右盘
+                </button>
+              </div>
+              <div class="fruit-picker" id="fruitPicker"></div>
+            </div>
+          </aside>
+
+          <section class="simulator-shell" aria-label="水果天平模拟器">
+            <div class="simulator-topbar">
+              <div class="simulator-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-scale"></use></svg>
+                实时天平
+              </div>
+              <div class="sim-actions">
+                <button class="small-action" type="button" data-clear-side="left">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-eraser"></use></svg>
+                  清空左盘
+                </button>
+                <button class="small-action" type="button" data-clear-side="right">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-eraser"></use></svg>
+                  清空右盘
+                </button>
+              </div>
+            </div>
+
+            <div class="scale-stage" id="scaleStage">
+              <div class="scale-post" aria-hidden="true"></div>
+              <div class="scale-base" aria-hidden="true"></div>
+              <div class="scale-beam" aria-hidden="true">
+                <span class="beam-hook left"></span>
+                <span class="beam-hook right"></span>
+              </div>
+
+              <div class="pan-unit left" data-drop-side="left">
+                <div class="pan-hanger" aria-hidden="true"></div>
+                <div class="pan-bowl">
+                  <div class="pan-label">
+                    <span>左盘</span>
+                    <span class="pan-weight-badge" id="leftBadge">0 份</span>
+                  </div>
+                  <div class="pan-items" id="leftPanItems"></div>
+                  <div class="pan-total" id="leftPanTotal">0 个水果</div>
+                </div>
+              </div>
+
+              <div class="pan-unit right" data-drop-side="right">
+                <div class="pan-hanger" aria-hidden="true"></div>
+                <div class="pan-bowl">
+                  <div class="pan-label">
+                    <span>右盘</span>
+                    <span class="pan-weight-badge" id="rightBadge">0 份</span>
+                  </div>
+                  <div class="pan-items" id="rightPanItems"></div>
+                  <div class="pan-total" id="rightPanTotal">0 个水果</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-strip" id="comparisonStrip">
+              <div class="total-chip">
+                <span>左边总重</span>
+                <strong id="leftTotal">0</strong>
+              </div>
+              <div class="comparison-message" role="status" aria-live="polite">
+                <span class="comparison-symbol" id="comparisonSymbol">?</span>
+                <span id="comparisonText">放些水果试试看</span>
+              </div>
+              <div class="total-chip">
+                <span>右边总重</span>
+                <strong id="rightTotal">0</strong>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </section>
+
+      <section class="mode-panel" id="panel-rank" role="tabpanel" aria-labelledby="tab-rank" hidden>
+        <div class="mode-intro">
+          <div>
+            <h2>用天平比较轻重</h2>
+            <p>根据当前重量完成两道小挑战，答案会随着重量设置而改变。</p>
+          </div>
+          <span class="mode-kicker">每完成一题获得 1 颗星</span>
+        </div>
+
+        <div class="exercise-grid">
+          <article class="exercise-panel">
+            <div class="exercise-header">
+              <div class="exercise-title">
+                <span class="exercise-number">1</span>
+                <div>
+                  <h3>从重到轻排一排</h3>
+                  <p>依次点击水果，填满三个方框。</p>
+                </div>
+              </div>
+            </div>
+            <div class="exercise-body">
+              <div class="rank-choices" id="rankChoices"></div>
+              <div class="rank-row" id="rankRow" aria-label="重量排序答案"></div>
+              <div class="exercise-actions">
+                <button class="action-button" id="clearRank" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-eraser"></use></svg>
+                  重新选择
+                </button>
+                <button class="check-button" id="checkRank" type="button" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-check"></use></svg>
+                  检查排序
+                </button>
+              </div>
+              <div class="feedback" id="rankFeedback" role="status" aria-live="polite"></div>
+            </div>
+          </article>
+
+          <article class="exercise-panel">
+            <div class="exercise-header">
+              <div class="exercise-title">
+                <span class="exercise-number">2</span>
+                <div>
+                  <h3>几个香蕉配平哈密瓜？</h3>
+                  <p>调整香蕉数量，让两边一样重。</p>
+                </div>
+              </div>
+            </div>
+            <div class="exercise-body">
+              <div class="equation-box">
+                <div class="equation-side">
+                  <div class="equation-fruit" id="melonChallengeIcon"></div>
+                  <strong>1 个哈密瓜</strong>
+                </div>
+                <div class="equals-sign" aria-hidden="true">=</div>
+                <div class="equation-side">
+                  <div class="equation-fruit">
+                    <div class="banana-list" id="bananaIcons"></div>
+                  </div>
+                  <div class="banana-controls" aria-label="香蕉数量">
+                    <button class="step-button" id="bananaMinus" type="button" aria-label="减少一根香蕉">−</button>
+                    <div class="banana-value" id="bananaValue">5</div>
+                    <button class="step-button" id="bananaPlus" type="button" aria-label="增加一根香蕉">+</button>
+                  </div>
+                </div>
+              </div>
+              <div class="weight-note" id="bananaWeightNote"></div>
+              <div class="exercise-actions">
+                <span></span>
+                <button class="check-button" id="checkBanana" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-check"></use></svg>
+                  检查平衡
+                </button>
+              </div>
+              <div class="feedback" id="bananaFeedback" role="status" aria-live="polite"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="mode-panel" id="panel-substitution" role="tabpanel" aria-labelledby="tab-substitution" hidden>
+        <div class="mode-intro">
+          <div>
+            <h2>找等量关系</h2>
+            <p>先观察两个示例，再用橙子表示菠萝和哈密瓜的重量。</p>
+          </div>
+          <span class="mode-kicker">第 3 题完成后获得星星</span>
+        </div>
+
+        <div class="substitution-sheet">
+          <div class="substitution-banner">
+            <div class="substitution-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-pencil"></use></svg>
+            </div>
+            <div>
+              <strong>在天平的方框中填入正确的数量。</strong>
+              <span>用橙子作为共同单位，找到两边的等量关系。</span>
+            </div>
+          </div>
+
+          <div class="visual-demo is-revealed" id="visualDemo" aria-labelledby="visualDemoTitle">
+            <div class="visual-demo-header">
+              <div class="visual-demo-title">
+                <span class="demo-eyebrow">演示图</span>
+                <h3 id="visualDemoTitle">把水果换成橙子</h3>
+              </div>
+              <div class="demo-switch" role="group" aria-label="选择要演示的等量代换">
+                <button class="demo-switch-button" type="button" data-demo-key="pineapples" aria-pressed="true">
+                  3 个菠萝
+                </button>
+                <button class="demo-switch-button" type="button" data-demo-key="melons" aria-pressed="false">
+                  2 个哈密瓜
+                </button>
+              </div>
+            </div>
+
+            <div class="demo-storyboard">
+              <section class="demo-panel" aria-label="原来的水果">
+                <span class="demo-panel-label">原来的水果</span>
+                <div class="demo-source-fruits" id="demoSourceFruits"></div>
+              </section>
+              <div class="demo-conversion" aria-hidden="true">
+                <span class="demo-arrow">→</span>
+                <span class="demo-rule" id="demoRule"></span>
+              </div>
+              <section class="demo-panel" aria-label="换成橙子的结果">
+                <span class="demo-panel-label">一组一组换成橙子</span>
+                <div class="demo-orange-groups" id="demoOrangeGroups"></div>
+                <div class="demo-total" id="demoTotal"></div>
+              </section>
+            </div>
+
+            <div class="demo-footer">
+              <p class="demo-caption" id="demoCaption" role="status" aria-live="polite"></p>
+              <button class="action-button demo-play" id="playVisualDemo" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-play"></use></svg>
+                播放换一换
+              </button>
+            </div>
+          </div>
+
+          <div class="relation-samples" id="relationSamples"></div>
+
+          <div class="substitution-header" aria-hidden="true">
+            <span>左边</span>
+            <span>等量关系</span>
+            <span>右边需要几个橙子？</span>
+            <span>检查结果</span>
+          </div>
+          <div id="substitutionRows"></div>
+
+          <div class="substitution-footer">
+            <div class="feedback" id="substitutionFeedback" role="status" aria-live="polite"></div>
+            <button class="check-button" id="checkSubstitution" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-check"></use></svg>
+              检查答案
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+  <script>
+    const FRUITS = {
+      pineapple: { name: "菠萝", weight: 3 },
+      orange: { name: "橙子", weight: 1 },
+      melon: { name: "哈密瓜", weight: 4 },
+      pear: { name: "梨", weight: 2 },
+      apple: { name: "苹果", weight: 0.5 },
+      grapes: { name: "葡萄", weight: 1.5 },
+      banana: { name: "香蕉", weight: 0.5 },
+      strawberry: { name: "草莓", weight: 0.2 }
+    };
+
+    const FRUIT_IDS = Object.keys(FRUITS);
+    const DEFAULT_WEIGHTS = FRUIT_IDS.reduce((weights, id) => {
+      weights[id] = FRUITS[id].weight;
+      return weights;
+    }, {});
+    const STORAGE_KEY = "fruit-balance-courseware-v2";
+    const TOLERANCE = 0.001;
+
+    const defaultState = () => ({
+      weights: { ...DEFAULT_WEIGHTS },
+      pans: {
+        left: {},
+        right: {}
+      },
+      targetSide: "left",
+      ranking: [],
+      bananaCount: 5,
+      substitutionAnswers: { pineapples: "", melons: "" },
+      completed: {
+        rank: false,
+        banana: false,
+        substitution: false
+      }
+    });
+
+    let state = loadState();
+    let activeMode = "lab";
+
+    const els = {
+      fruitPicker: document.getElementById("fruitPicker"),
+      weightsList: document.getElementById("weightsList"),
+      sideTarget: document.getElementById("sideTarget"),
+      scaleStage: document.getElementById("scaleStage"),
+      leftPanItems: document.getElementById("leftPanItems"),
+      rightPanItems: document.getElementById("rightPanItems"),
+      leftBadge: document.getElementById("leftBadge"),
+      rightBadge: document.getElementById("rightBadge"),
+      leftPanTotal: document.getElementById("leftPanTotal"),
+      rightPanTotal: document.getElementById("rightPanTotal"),
+      leftTotal: document.getElementById("leftTotal"),
+      rightTotal: document.getElementById("rightTotal"),
+      comparisonStrip: document.getElementById("comparisonStrip"),
+      comparisonSymbol: document.getElementById("comparisonSymbol"),
+      comparisonText: document.getElementById("comparisonText"),
+      progressText: document.getElementById("progressText"),
+      stars: document.getElementById("stars"),
+      rankChoices: document.getElementById("rankChoices"),
+      rankRow: document.getElementById("rankRow"),
+      rankFeedback: document.getElementById("rankFeedback"),
+      checkRank: document.getElementById("checkRank"),
+      bananaIcons: document.getElementById("bananaIcons"),
+      bananaValue: document.getElementById("bananaValue"),
+      melonChallengeIcon: document.getElementById("melonChallengeIcon"),
+      bananaWeightNote: document.getElementById("bananaWeightNote"),
+      bananaFeedback: document.getElementById("bananaFeedback"),
+      checkBanana: document.getElementById("checkBanana"),
+      visualDemo: document.getElementById("visualDemo"),
+      demoSourceFruits: document.getElementById("demoSourceFruits"),
+      demoOrangeGroups: document.getElementById("demoOrangeGroups"),
+      demoRule: document.getElementById("demoRule"),
+      demoTotal: document.getElementById("demoTotal"),
+      demoCaption: document.getElementById("demoCaption"),
+      playVisualDemo: document.getElementById("playVisualDemo"),
+      relationSamples: document.getElementById("relationSamples"),
+      substitutionRows: document.getElementById("substitutionRows"),
+      substitutionFeedback: document.getElementById("substitutionFeedback"),
+      checkSubstitution: document.getElementById("checkSubstitution"),
+      confettiLayer: document.getElementById("confettiLayer")
+    };
+
+    function loadState() {
+      const fresh = defaultState();
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved || typeof saved !== "object") return fresh;
+
+        const merged = {
+          ...fresh,
+          ...saved,
+          weights: { ...fresh.weights, ...(saved.weights || {}) },
+          pans: {
+            left: sanitisePan(saved.pans && saved.pans.left),
+            right: sanitisePan(saved.pans && saved.pans.right)
+          },
+          completed: { ...fresh.completed, ...(saved.completed || {}) },
+          substitutionAnswers: {
+            ...fresh.substitutionAnswers,
+            ...(saved.substitutionAnswers || {})
+          },
+          ranking: Array.isArray(saved.ranking) ? saved.ranking.filter((id) => FRUITS[id]).slice(0, 3) : []
+        };
+
+        FRUIT_IDS.forEach((id) => {
+          const value = Number(merged.weights[id]);
+          merged.weights[id] = Number.isFinite(value) ? clampWeight(value) : fresh.weights[id];
+        });
+        merged.targetSide = merged.targetSide === "right" ? "right" : "left";
+        merged.bananaCount = Math.min(12, Math.max(1, Number(merged.bananaCount) || 5));
+        return merged;
+      } catch (error) {
+        return fresh;
+      }
+    }
+
+    function sanitisePan(pan) {
+      const clean = {};
+      if (!pan || typeof pan !== "object") return clean;
+      FRUIT_IDS.forEach((id) => {
+        const count = Number(pan[id]);
+        if (Number.isFinite(count) && count > 0) clean[id] = Math.min(20, Math.floor(count));
+      });
+      return clean;
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (error) {
+        // The courseware still works when storage is unavailable.
+      }
+    }
+
+    function clampWeight(value) {
+      return Math.min(20, Math.max(0.1, Math.round(value * 10) / 10));
+    }
+
+    function formatNumber(value) {
+      const rounded = Math.round(value * 10) / 10;
+      return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    }
+
+    function fruitSVG(id, className = "") {
+      return `<svg class="fruit-svg ${className}" viewBox="0 0 100 100" aria-hidden="true"><use href="#fruit-${id}"></use></svg>`;
+    }
+
+    function iconSVG(id, className = "") {
+      return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><use href="#${id}"></use></svg>`;
+    }
+
+    function panCount(side) {
+      return Object.values(state.pans[side]).reduce((sum, count) => sum + count, 0);
+    }
+
+    function panWeight(side) {
+      return FRUIT_IDS.reduce((sum, id) => {
+        return sum + (state.pans[side][id] || 0) * state.weights[id];
+      }, 0);
+    }
+
+    function addFruit(id, side = state.targetSide) {
+      if (!FRUITS[id]) return;
+      const count = state.pans[side][id] || 0;
+      if (count >= 20) {
+        announceComparison("每个秤盘最多放 20 个同种水果。", "balanced");
+        return;
+      }
+      state.pans[side][id] = count + 1;
+      state.targetSide = side;
+      saveState();
+      renderPanState();
+      renderSideTargets();
+    }
+
+    function removeFruit(id, side) {
+      const count = state.pans[side][id] || 0;
+      if (count <= 1) {
+        delete state.pans[side][id];
+      } else {
+        state.pans[side][id] = count - 1;
+      }
+      saveState();
+      renderPanState();
+    }
+
+    function clearPan(side) {
+      state.pans[side] = {};
+      saveState();
+      renderPanState();
+    }
+
+    function renderFruitPicker() {
+      els.fruitPicker.innerHTML = FRUIT_IDS.map((id) => `
+        <button
+          class="fruit-card"
+          type="button"
+          draggable="true"
+          data-fruit-id="${id}"
+          aria-label="把${FRUITS[id].name}放入${state.targetSide === "left" ? "左盘" : "右盘"}，每个重${formatNumber(state.weights[id])}份"
+        >
+          ${fruitSVG(id)}
+          <span class="fruit-card-copy">
+            <span class="fruit-card-name">${FRUITS[id].name}</span>
+            <span class="fruit-card-weight">每个 ${formatNumber(state.weights[id])} 份</span>
+          </span>
+          <span class="fruit-add-mark" aria-hidden="true">+</span>
+        </button>
+      `).join("");
+    }
+
+    function renderWeights() {
+      els.weightsList.innerHTML = FRUIT_IDS.map((id) => `
+        <div class="weight-row">
+          ${fruitSVG(id)}
+          <label class="weight-name" for="weight-${id}">${FRUITS[id].name}</label>
+          <div class="weight-stepper">
+            <button class="step-button" type="button" data-weight-adjust="-0.5" data-weight-id="${id}" aria-label="减少${FRUITS[id].name}的重量">−</button>
+            <input
+              class="weight-input"
+              id="weight-${id}"
+              data-weight-id="${id}"
+              type="number"
+              min="0.1"
+              max="20"
+              step="0.1"
+              inputmode="decimal"
+              value="${formatNumber(state.weights[id])}"
+              aria-label="${FRUITS[id].name}的重量，单位份"
+            >
+            <button class="step-button" type="button" data-weight-adjust="0.5" data-weight-id="${id}" aria-label="增加${FRUITS[id].name}的重量">+</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderSideTargets() {
+      const label = state.targetSide === "left" ? "左盘" : "右盘";
+      els.sideTarget.textContent = `放入${label}`;
+      document.querySelectorAll(".side-button").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.side === state.targetSide));
+      });
+      els.fruitPicker.querySelectorAll(".fruit-card").forEach((card) => {
+        const id = card.dataset.fruitId;
+        card.setAttribute("aria-label", `把${FRUITS[id].name}放入${label}，每个重${formatNumber(state.weights[id])}份`);
+      });
+    }
+
+    function renderPan(side) {
+      const target = side === "left" ? els.leftPanItems : els.rightPanItems;
+      const fruitInstances = [];
+      FRUIT_IDS.forEach((id) => {
+        const count = state.pans[side][id] || 0;
+        for (let index = 0; index < count; index += 1) {
+          fruitInstances.push(id);
+        }
+      });
+
+      if (!fruitInstances.length) {
+        target.innerHTML = '<div class="pan-empty">点击或拖入水果</div>';
+        return;
+      }
+
+      const rows = [];
+      for (let index = 0; index < fruitInstances.length; index += 4) {
+        rows.push(fruitInstances.slice(index, index + 4));
+      }
+
+      target.innerHTML = `
+        <div class="pan-pile">
+          ${rows.reverse().map((row) => `
+            <div class="pan-pile-row">
+              ${row.map((id) => `
+                <button
+                  class="pan-fruit"
+                  type="button"
+                  data-remove-fruit="${id}"
+                  data-remove-side="${side}"
+                  aria-label="从${side === "left" ? "左盘" : "右盘"}移除一个${FRUITS[id].name}，当前${state.pans[side][id]}个"
+                  title="点击移除一个${FRUITS[id].name}"
+                >
+                  ${fruitSVG(id)}
+                </button>
+              `).join("")}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderComparison() {
+      const left = panWeight("left");
+      const right = panWeight("right");
+      const diff = right - left;
+      const maxTilt = 8;
+      const angle = Math.max(-maxTilt, Math.min(maxTilt, (diff / Math.max(1, left + right)) * 12));
+      const shift = Math.abs(angle) * 2.7;
+
+      els.scaleStage.style.setProperty("--beam-angle", `${angle.toFixed(2)}deg`);
+      els.scaleStage.style.setProperty("--left-pan-y", `${diff > TOLERANCE ? -shift : diff < -TOLERANCE ? shift : 0}px`);
+      els.scaleStage.style.setProperty("--right-pan-y", `${diff > TOLERANCE ? shift : diff < -TOLERANCE ? -shift : 0}px`);
+
+      els.leftTotal.textContent = formatNumber(left);
+      els.rightTotal.textContent = formatNumber(right);
+      els.leftBadge.textContent = `${formatNumber(left)} 份`;
+      els.rightBadge.textContent = `${formatNumber(right)} 份`;
+      els.leftPanTotal.textContent = `${panCount("left")} 个水果`;
+      els.rightPanTotal.textContent = `${panCount("right")} 个水果`;
+
+      if (panCount("left") === 0 && panCount("right") === 0) {
+        announceComparison("放些水果试试看", "neutral", "?");
+      } else if (Math.abs(diff) <= TOLERANCE) {
+        announceComparison("两边一样重！", "balanced", "=");
+      } else if (left > right) {
+        announceComparison(`左边重 ${formatNumber(left - right)} 份`, "left", ">");
+      } else {
+        announceComparison(`右边重 ${formatNumber(right - left)} 份`, "right", "<");
+      }
+    }
+
+    function announceComparison(text, stateName, symbol) {
+      els.comparisonText.textContent = text;
+      els.comparisonSymbol.textContent = symbol || ">";
+      els.comparisonStrip.classList.remove("is-balanced", "is-left-heavy", "is-right-heavy");
+      if (stateName === "balanced") els.comparisonStrip.classList.add("is-balanced");
+      if (stateName === "left") els.comparisonStrip.classList.add("is-left-heavy");
+      if (stateName === "right") els.comparisonStrip.classList.add("is-right-heavy");
+    }
+
+    function renderPanState() {
+      renderPan("left");
+      renderPan("right");
+      renderComparison();
+      renderFruitPicker();
+      renderSideTargets();
+    }
+
+    function setWeight(id, nextWeight) {
+      if (!FRUITS[id]) return;
+      state.weights[id] = clampWeight(nextWeight);
+      const input = document.getElementById(`weight-${id}`);
+      if (input) input.value = formatNumber(state.weights[id]);
+      saveState();
+      renderPanState();
+      renderRankChoices();
+      renderRankSlots();
+      renderBananaChallenge();
+      renderRelationSamples();
+      renderVisualDemo(true);
+      renderSubstitutionRows();
+    }
+
+    function renderStars() {
+      const keys = Object.keys(state.completed);
+      const done = keys.filter((key) => state.completed[key]).length;
+      els.progressText.textContent = `${done} / ${keys.length}`;
+      els.stars.innerHTML = keys.map((key) => `
+        <svg class="star ${state.completed[key] ? "is-filled" : ""}" viewBox="0 0 24 24" aria-hidden="true">
+          <use href="#icon-star"></use>
+        </svg>
+      `).join("");
+    }
+
+    function awardStar(key, anchor) {
+      if (state.completed[key]) return;
+      state.completed[key] = true;
+      saveState();
+      renderStars();
+      celebrate(anchor);
+    }
+
+    function switchMode(mode) {
+      activeMode = mode;
+      document.querySelectorAll(".mode-tab").forEach((tab) => {
+        const selected = tab.dataset.mode === mode;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      document.querySelectorAll(".mode-panel").forEach((panel) => {
+        panel.hidden = panel.id !== `panel-${mode}`;
+      });
+      if (mode === "rank") {
+        renderRankChoices();
+        renderRankSlots();
+        renderBananaChallenge();
+      }
+      if (mode === "substitution") {
+        renderRelationSamples();
+        renderVisualDemo();
+        renderSubstitutionRows();
+      }
+    }
+
+    const rankFruitIds = ["pineapple", "pear", "apple"];
+
+    function renderRankChoices() {
+      els.rankChoices.innerHTML = rankFruitIds.map((id) => {
+        const used = state.ranking.includes(id);
+        return `
+          <button class="rank-fruit ${used ? "is-used" : ""}" type="button" data-rank-add="${id}" ${used ? "disabled" : ""} aria-label="选择${FRUITS[id].name}">
+            ${fruitSVG(id)}
+            <span>${FRUITS[id].name}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderRankSlots() {
+      els.rankRow.innerHTML = `
+        ${slotMarkup(0)}
+        <span class="rank-symbol" aria-hidden="true">&gt;</span>
+        ${slotMarkup(1)}
+        <span class="rank-symbol" aria-hidden="true">&gt;</span>
+        ${slotMarkup(2)}
+      `;
+      els.checkRank.disabled = state.ranking.length !== 3;
+    }
+
+    function slotMarkup(index) {
+      const id = state.ranking[index];
+      return `
+        <button class="rank-slot" type="button" data-rank-slot="${index}" aria-label="${id ? `移除第${index + 1}位的${FRUITS[id].name}` : `第${index + 1}个排序空位`}">
+          ${id ? `${fruitSVG(id)}<strong>${FRUITS[id].name}</strong>` : '<span class="rank-placeholder">?</span>'}
+        </button>
+      `;
+    }
+
+    function checkRanking() {
+      const feedback = els.rankFeedback;
+      feedback.className = "feedback";
+      if (state.ranking.length !== 3) {
+        feedback.textContent = "先把三个空位填满。";
+        feedback.classList.add("is-error");
+        return;
+      }
+
+      const valid = state.ranking.every((id, index) => {
+        if (index === 2) return true;
+        return state.weights[id] >= state.weights[state.ranking[index + 1]];
+      });
+
+      if (valid) {
+        feedback.textContent = "排序正确！你按重量从重到轻排好了。";
+        feedback.classList.add("is-success");
+        awardStar("rank", els.checkRank);
+      } else {
+        feedback.textContent = "再想一想：先比较每个水果右边的重量数字，再重新排序。";
+        feedback.classList.add("is-error");
+      }
+    }
+
+    function clearRanking() {
+      state.ranking = [];
+      saveState();
+      renderRankChoices();
+      renderRankSlots();
+      els.rankFeedback.textContent = "";
+      els.rankFeedback.className = "feedback";
+    }
+
+    function renderBananaChallenge() {
+      els.melonChallengeIcon.innerHTML = fruitSVG("melon");
+      els.bananaValue.textContent = state.bananaCount;
+      els.bananaIcons.innerHTML = Array.from({ length: state.bananaCount }, () => fruitSVG("banana")).join("");
+      els.bananaWeightNote.innerHTML = `
+        <span>哈密瓜 ${formatNumber(state.weights.melon)} 份</span>
+        <span>香蕉 ${formatNumber(state.weights.banana)} 份 / 根</span>
+      `;
+    }
+
+    function changeBananaCount(delta) {
+      state.bananaCount = Math.min(12, Math.max(1, state.bananaCount + delta));
+      saveState();
+      renderBananaChallenge();
+      els.bananaFeedback.textContent = "";
+      els.bananaFeedback.className = "feedback";
+    }
+
+    function checkBanana() {
+      const leftWeight = state.weights.melon;
+      const rightWeight = state.bananaCount * state.weights.banana;
+      const feedback = els.bananaFeedback;
+      feedback.className = "feedback";
+
+      if (Math.abs(leftWeight - rightWeight) <= TOLERANCE) {
+        feedback.textContent = `平衡了！${state.bananaCount} 根香蕉和 1 个哈密瓜一样重。`;
+        feedback.classList.add("is-success");
+        awardStar("banana", els.checkBanana);
+      } else {
+        const direction = rightWeight < leftWeight ? "再加一些香蕉" : "香蕉放多了，减少一些";
+        feedback.textContent = `${direction}，让两边总重量相等。`;
+        feedback.classList.add("is-error");
+      }
+    }
+
+    function relationQuantity(fruitId) {
+      const ratio = state.weights[fruitId] / state.weights.orange;
+      return {
+        ratio,
+        exact: Math.abs(ratio - Math.round(ratio)) <= 0.001,
+        label: Math.abs(ratio - Math.round(ratio)) <= 0.001 ? String(Math.round(ratio)) : formatNumber(ratio)
+      };
+    }
+
+    function renderRelationSamples() {
+      const pineapple = relationQuantity("pineapple");
+      const melon = relationQuantity("melon");
+      els.relationSamples.innerHTML = `
+        <section class="relation-sample">
+          <p class="sample-caption">1 个菠萝 = ${pineapple.label} 个橙子</p>
+          ${miniScaleMarkup("pineapple", 1, "orange", pineapple.ratio)}
+        </section>
+        <section class="relation-sample">
+          <p class="sample-caption">1 个哈密瓜 = ${melon.label} 个橙子</p>
+          ${miniScaleMarkup("melon", 1, "orange", melon.ratio)}
+        </section>
+      `;
+    }
+
+    function miniScaleMarkup(leftFruit, leftCount, rightFruit, rightCount) {
+      const displayRightCount = Math.min(10, Math.max(1, Math.round(rightCount)));
+      const fruitDots = (id, count) => Array.from({ length: count }, () => fruitSVG(id)).join("");
+      return `
+        <div class="mini-scale" aria-hidden="true">
+          <div class="mini-pan"><div class="mini-fruits">${fruitDots(leftFruit, leftCount)}</div></div>
+          <div class="mini-scale-center"><div class="mini-beam"></div><div class="mini-post"></div></div>
+          <div class="mini-pan"><div class="mini-fruits">${fruitDots(rightFruit, displayRightCount)}</div></div>
+        </div>
+      `;
+    }
+
+    const substitutionQuestions = [
+      {
+        key: "pineapples",
+        fruitId: "pineapple",
+        count: 3,
+        title: "3 个菠萝",
+        description: "每个菠萝换成同样重的橙子"
+      },
+      {
+        key: "melons",
+        fruitId: "melon",
+        count: 2,
+        title: "2 个哈密瓜",
+        description: "每个哈密瓜换成同样重的橙子"
+      }
+    ];
+
+    let visualDemoKey = "pineapples";
+
+    function renderVisualDemo(animate = false) {
+      const question = substitutionQuestions.find((item) => item.key === visualDemoKey) || substitutionQuestions[0];
+      const ratio = state.weights[question.fruitId] / state.weights.orange;
+      const total = question.count * ratio;
+      const fruitName = FRUITS[question.fruitId].name;
+      const visibleOranges = Math.max(1, Math.min(6, Math.ceil(ratio)));
+
+      els.demoSourceFruits.innerHTML = Array.from({ length: question.count }, (_, index) => `
+        <span class="demo-source-fruit" style="--item-index:${index}">
+          ${fruitSVG(question.fruitId)}
+          <span class="demo-source-number">${index + 1}</span>
+        </span>
+      `).join("");
+
+      els.demoOrangeGroups.innerHTML = Array.from({ length: question.count }, (_, index) => `
+        <div class="demo-orange-group" style="--group-index:${index}">
+          <span class="demo-group-label">第 ${index + 1} 个${fruitName}</span>
+          <span class="demo-orange-icons" aria-hidden="true">
+            ${Array.from({ length: visibleOranges }, () => fruitSVG("orange")).join("")}
+          </span>
+          <strong class="demo-group-count">${formatNumber(ratio)} 个</strong>
+        </div>
+      `).join("");
+
+      els.demoRule.textContent = `每个${fruitName}换 ${formatNumber(ratio)} 个橙子`;
+      els.demoTotal.textContent = `一共 ${formatNumber(total)} 个橙子`;
+      els.demoCaption.textContent = `${question.count} 个${fruitName} × 每个换 ${formatNumber(ratio)} 个橙子 = ${formatNumber(total)} 个橙子。`;
+
+      document.querySelectorAll("[data-demo-key]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.demoKey === question.key));
+      });
+
+      if (animate) {
+        els.visualDemo.classList.remove("is-revealed");
+        void els.visualDemo.offsetWidth;
+        els.visualDemo.classList.add("is-revealed");
+      }
+    }
+
+    function playVisualDemo() {
+      const question = substitutionQuestions.find((item) => item.key === visualDemoKey) || substitutionQuestions[0];
+      els.demoCaption.textContent = `正在把${question.count}个${FRUITS[question.fruitId].name}一组一组换成橙子……`;
+      requestAnimationFrame(() => renderVisualDemo(true));
+    }
+
+    function renderSubstitutionRows() {
+      els.substitutionRows.innerHTML = substitutionQuestions.map((question) => {
+        const ratio = state.weights[question.fruitId] / state.weights.orange;
+        const expected = question.count * ratio;
+        const value = state.substitutionAnswers[question.key];
+        return `
+          <div class="substitution-row" id="substitution-row-${question.key}">
+            <div class="substitution-left" aria-label="${question.title}">
+              ${Array.from({ length: question.count }, () => fruitSVG(question.fruitId)).join("")}
+            </div>
+            <div class="substitution-expression">
+              ${question.title} = ? 个橙子
+              <small>${question.description}</small>
+            </div>
+            <div class="answer-control">
+              <button class="step-button" type="button" data-sub-step="-1" data-sub-key="${question.key}" aria-label="减少${question.title}的橙子数量">−</button>
+              <input
+                class="answer-input"
+                id="sub-answer-${question.key}"
+                type="number"
+                min="0"
+                max="200"
+                step="0.1"
+                inputmode="decimal"
+                data-sub-input="${question.key}"
+                value="${value}"
+                aria-label="${question.title}等于几个橙子"
+                data-expected="${expected}"
+              >
+              <button class="step-button" type="button" data-sub-step="1" data-sub-key="${question.key}" aria-label="增加${question.title}的橙子数量">+</button>
+            </div>
+            <div class="row-result" id="sub-result-${question.key}" aria-live="polite"></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateSubstitutionAnswer(key, value) {
+      state.substitutionAnswers[key] = value;
+      saveState();
+    }
+
+    function stepSubstitutionAnswer(key, delta) {
+      const current = Number(state.substitutionAnswers[key]) || 0;
+      const next = Math.min(200, Math.max(0, Math.round((current + delta) * 10) / 10));
+      state.substitutionAnswers[key] = formatNumber(next);
+      saveState();
+      const input = document.getElementById(`sub-answer-${key}`);
+      if (input) input.value = state.substitutionAnswers[key];
+    }
+
+    function checkSubstitution() {
+      let allCorrect = true;
+      let allAnswered = true;
+
+      substitutionQuestions.forEach((question) => {
+        const input = document.getElementById(`sub-answer-${question.key}`);
+        const result = document.getElementById(`sub-result-${question.key}`);
+        const row = document.getElementById(`substitution-row-${question.key}`);
+        const answer = Number(input.value);
+        const expected = question.count * state.weights[question.fruitId] / state.weights.orange;
+        const correct = Number.isFinite(answer) && Math.abs(answer - expected) <= 0.05;
+
+        row.classList.remove("is-correct", "is-wrong");
+        result.classList.remove("correct", "wrong");
+        if (input.value === "") {
+          allAnswered = false;
+          result.textContent = "先填写数量";
+          result.classList.add("wrong");
+          allCorrect = false;
+        } else if (correct) {
+          row.classList.add("is-correct");
+          result.textContent = "正确";
+          result.classList.add("correct");
+        } else {
+          row.classList.add("is-wrong");
+          result.textContent = "再算一算";
+          result.classList.add("wrong");
+          allCorrect = false;
+        }
+      });
+
+      els.substitutionFeedback.className = "feedback";
+      if (!allAnswered) {
+        els.substitutionFeedback.textContent = "两个方框都要填写。";
+        els.substitutionFeedback.classList.add("is-error");
+      } else if (allCorrect) {
+        els.substitutionFeedback.textContent = "全部正确！你找到了橙子与两种水果的等量关系。";
+        els.substitutionFeedback.classList.add("is-success");
+        awardStar("substitution", els.checkSubstitution);
+      } else {
+        els.substitutionFeedback.textContent = "先看上面的示例，想一想每个水果相当于几个橙子。";
+        els.substitutionFeedback.classList.add("is-error");
+      }
+    }
+
+    function celebrate(anchor) {
+      if (!anchor || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const rect = anchor.getBoundingClientRect();
+      const colors = ["#f6ca4d", "#0f766e", "#e7671f", "#2b6cb0", "#c93f52"];
+      for (let index = 0; index < 18; index += 1) {
+        const bit = document.createElement("span");
+        bit.className = "confetti-bit";
+        bit.style.left = `${rect.left + rect.width / 2}px`;
+        bit.style.top = `${rect.top + rect.height / 2}px`;
+        bit.style.background = colors[index % colors.length];
+        bit.style.setProperty("--tx", `${(Math.random() - 0.5) * 170}px`);
+        bit.style.setProperty("--ty", `${-40 - Math.random() * 100}px`);
+        bit.style.setProperty("--rot", `${(Math.random() - 0.5) * 540}deg`);
+        els.confettiLayer.appendChild(bit);
+        setTimeout(() => bit.remove(), 800);
+      }
+    }
+
+    function resetAll() {
+      state = defaultState();
+      visualDemoKey = "pineapples";
+      saveState();
+      renderAll();
+      switchMode("lab");
+    }
+
+    function renderAll() {
+      renderFruitPicker();
+      renderWeights();
+      renderSideTargets();
+      renderPanState();
+      renderStars();
+      renderRankChoices();
+      renderRankSlots();
+      renderBananaChallenge();
+      renderRelationSamples();
+      renderVisualDemo();
+      renderSubstitutionRows();
+      els.rankFeedback.textContent = "";
+      els.rankFeedback.className = "feedback";
+      els.bananaFeedback.textContent = "";
+      els.bananaFeedback.className = "feedback";
+      els.substitutionFeedback.textContent = "";
+      els.substitutionFeedback.className = "feedback";
+    }
+
+    els.fruitPicker.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-fruit-id]");
+      if (card) addFruit(card.dataset.fruitId);
+    });
+
+    els.fruitPicker.addEventListener("dragstart", (event) => {
+      const card = event.target.closest("[data-fruit-id]");
+      if (!card) return;
+      card.classList.add("is-dragging");
+      event.dataTransfer.setData("application/x-fruit-id", card.dataset.fruitId);
+      event.dataTransfer.effectAllowed = "copy";
+    });
+
+    els.fruitPicker.addEventListener("dragend", (event) => {
+      const card = event.target.closest("[data-fruit-id]");
+      if (card) card.classList.remove("is-dragging");
+    });
+
+    document.querySelectorAll(".pan-unit").forEach((pan) => {
+      pan.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        pan.classList.add("drop-hover");
+      });
+      pan.addEventListener("dragleave", (event) => {
+        if (!pan.contains(event.relatedTarget)) pan.classList.remove("drop-hover");
+      });
+      pan.addEventListener("drop", (event) => {
+        event.preventDefault();
+        pan.classList.remove("drop-hover");
+        const id = event.dataTransfer.getData("application/x-fruit-id");
+        if (FRUITS[id]) addFruit(id, pan.dataset.dropSide);
+      });
+    });
+
+    document.querySelectorAll(".side-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.targetSide = button.dataset.side;
+        saveState();
+        renderFruitPicker();
+        renderSideTargets();
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      const remove = event.target.closest("[data-remove-fruit]");
+      if (remove) removeFruit(remove.dataset.removeFruit, remove.dataset.removeSide);
+
+      const clear = event.target.closest("[data-clear-side]");
+      if (clear) clearPan(clear.dataset.clearSide);
+
+      const weightButton = event.target.closest("[data-weight-adjust]");
+      if (weightButton) {
+        const id = weightButton.dataset.weightId;
+        const delta = Number(weightButton.dataset.weightAdjust);
+        setWeight(id, state.weights[id] + delta);
+      }
+
+      const rankAdd = event.target.closest("[data-rank-add]");
+      if (rankAdd && state.ranking.length < 3 && !state.ranking.includes(rankAdd.dataset.rankAdd)) {
+        state.ranking.push(rankAdd.dataset.rankAdd);
+        saveState();
+        renderRankChoices();
+        renderRankSlots();
+        els.rankFeedback.textContent = "";
+        els.rankFeedback.className = "feedback";
+      }
+
+      const rankSlot = event.target.closest("[data-rank-slot]");
+      if (rankSlot) {
+        const index = Number(rankSlot.dataset.rankSlot);
+        if (state.ranking[index]) {
+          state.ranking.splice(index, 1);
+          saveState();
+          renderRankChoices();
+          renderRankSlots();
+          els.rankFeedback.textContent = "";
+          els.rankFeedback.className = "feedback";
+        }
+      }
+
+      const subStep = event.target.closest("[data-sub-step]");
+      if (subStep) stepSubstitutionAnswer(subStep.dataset.subKey, Number(subStep.dataset.subStep));
+
+      const demoSwitch = event.target.closest("[data-demo-key]");
+      if (demoSwitch) {
+        visualDemoKey = demoSwitch.dataset.demoKey;
+        renderVisualDemo(true);
+      }
+
+      if (event.target.closest("#playVisualDemo")) playVisualDemo();
+    });
+
+    els.weightsList.addEventListener("change", (event) => {
+      const input = event.target.closest("[data-weight-id]");
+      if (!input) return;
+      const value = Number(input.value);
+      if (!Number.isFinite(value)) {
+        input.value = formatNumber(state.weights[input.dataset.weightId]);
+        return;
+      }
+      setWeight(input.dataset.weightId, value);
+    });
+
+    els.weightsList.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      const input = event.target.closest("[data-weight-id]");
+      if (input) input.blur();
+    });
+
+    els.substitutionRows.addEventListener("input", (event) => {
+      const input = event.target.closest("[data-sub-input]");
+      if (!input) return;
+      updateSubstitutionAnswer(input.dataset.subInput, input.value);
+    });
+
+    document.querySelector(".mode-tabs").addEventListener("click", (event) => {
+      const tab = event.target.closest("[data-mode]");
+      if (tab) switchMode(tab.dataset.mode);
+    });
+
+    document.querySelector(".mode-tabs").addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      const tabs = [...document.querySelectorAll(".mode-tab")];
+      const current = tabs.findIndex((tab) => tab.dataset.mode === activeMode);
+      let next = current;
+      if (event.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+      if (event.key === "ArrowRight") next = (current + 1) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      event.preventDefault();
+      switchMode(tabs[next].dataset.mode);
+      tabs[next].focus();
+    });
+
+    document.getElementById("clearRank").addEventListener("click", clearRanking);
+    els.checkRank.addEventListener("click", checkRanking);
+    document.getElementById("bananaMinus").addEventListener("click", () => changeBananaCount(-1));
+    document.getElementById("bananaPlus").addEventListener("click", () => changeBananaCount(1));
+    els.checkBanana.addEventListener("click", checkBanana);
+    els.checkSubstitution.addEventListener("click", checkSubstitution);
+    document.getElementById("resetAll").addEventListener("click", resetAll);
+
+    renderAll();
+  </script>
+</body>
+</html>
